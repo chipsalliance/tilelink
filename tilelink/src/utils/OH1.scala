@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2016-2017 SiFive, Inc.
 
+package org.chipsalliance.tilelink
 package utils
 
 import chisel3._
