@@ -8,7 +8,7 @@ import chisel3.internal.firrtl.Width
 
 /** opcode field of TileLink messages
   *
-  * cf. TileLink Spec 1.8.1 Table 13
+  * cf. TileLink Spec 1.9.3 Table 12
   */
 object OpCode {
   protected[tilelink] val width: Width = 3.W
@@ -47,7 +47,8 @@ object Param {
     */
   def tieZero: UInt = 0.U(width)
 
-  /** TileLink Spec 1.8.1 Table 23
+  /** param field for ArithmeticData
+    * TileLink Spec 1.9.3 Table 23
     */
   object Arithmetic {
     val MIN:  UInt = 0.U(width)
@@ -57,7 +58,8 @@ object Param {
     val ADD:  UInt = 4.U(width)
   }
 
-  /** TileLink Spec 1.8.1 Table 25
+  /** param field for LogicalData
+    * TileLink Spec 1.9.3 Table 25
     */
   object Logical {
     val XOR:  UInt = 0.U(width)
@@ -66,14 +68,19 @@ object Param {
     val SWAP: UInt = 3.U(width)
   }
 
-  /** TileLink Spec 1.8.1 Table 27 Intent
+  /** param field for Intent
+    * TileLink Spec 1.9.3 Table 27
     */
   object Intent {
     val PrefetchRead:  UInt = 0.U(width)
     val PrefetchWrite: UInt = 1.U(width)
+    val CBOInval:      UInt = 5.U(width)
+    val CBOClean:      UInt = 6.U(width)
+    val CBOFlush:      UInt = 7.U(width)
   }
 
-  /** TileLink Spec 1.8.1 Table 31 Cap
+  /** permissions transitions encodings for Cap
+    * TileLink Spec 1.9.3 Table 31
     */
   object Cap {
     val toT: UInt = 0.U(width)
@@ -81,7 +88,8 @@ object Param {
     val toN: UInt = 2.U(width)
   }
 
-  /** TileLink Spec 1.8.1 Table 31 Grow
+  /** permissions transitions encodings for Grow
+    * TileLink Spec 1.9.3 Table 31
     */
   object Grow {
     val NtoB: UInt = 0.U(width)
@@ -89,7 +97,8 @@ object Param {
     val BtoT: UInt = 2.U(width)
   }
 
-  /** TileLink Spec 1.8.1 Table 31 Prune
+  /** permissions transitions encodings for Prune
+    * TileLink Spec 1.9.3 Table 31
     */
   object Prune {
     val TtoB: UInt = 0.U(width)
@@ -97,7 +106,8 @@ object Param {
     val BtoN: UInt = 2.U(width)
   }
 
-  /** TileLink Spec 1.8.1 Table 31 Report
+  /** permissions transitions encodings for Report
+    * TileLink Spec 1.9.3 Table 31
     */
   object Report {
     val TtoT: UInt = 3.U(width)
