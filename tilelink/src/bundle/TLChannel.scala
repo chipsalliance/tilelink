@@ -11,7 +11,7 @@ trait TLChannel extends Bundle {
 
 class TLChannelA(val parameter: TileLinkChannelAParameter) extends TLChannel {
   private val maskWidth = parameter.dataWidth / 8
-  // NOTE: this field is called a_code in TileLink spec version 1.8.1 p. 15, which is probably a typo
+  // NOTE: this field is called a_code in TileLink spec version 1.9.3 p. 16, which is probably a typo
   val opcode:  UInt = UInt(OpCode.width)
   val param:   UInt = UInt(Param.width)
   val size:    UInt = UInt(parameter.sizeWidth.W)
