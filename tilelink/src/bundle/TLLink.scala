@@ -52,7 +52,7 @@ object TLLink {
   }
 }
 
-class TLLink(val parameter: TLLinkParameter) extends Record with chisel3.experimental.AutoCloneType {
+class TLLink(val parameter: TLLinkParameter) extends Record {
   def a: DecoupledIO[TLChannelA] =
     elements("a").asInstanceOf[DecoupledIO[TLChannelA]]
 
