@@ -9,7 +9,7 @@ import upickle.default.{macroRW, ReadWriter => RW}
 
 sealed trait TLChannelParameter
 
-object TLChannelParameter        {
+object TLChannelParameter {
   implicit val rw: RW[TLChannelParameter] = RW.merge(
     TileLinkChannelAParameter.rw,
     TileLinkChannelBParameter.rw,
