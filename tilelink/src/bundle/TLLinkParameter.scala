@@ -32,13 +32,13 @@ case class TLLinkParameter(
     "Width of data field in bytes must be power of 2"
   )
 
-  def channelAParameter: TileLinkChannelAParameter         =
+  def channelAParameter: TileLinkChannelAParameter =
     TileLinkChannelAParameter(addressWidth, sourceWidth, dataWidth, sizeWidth)
   def channelBParameter: Option[TileLinkChannelBParameter] =
     Option.when(hasBCEChannels)(TileLinkChannelBParameter(addressWidth, sourceWidth, dataWidth, sizeWidth))
   def channelCParameter: Option[TileLinkChannelCParameter] =
     Option.when(hasBCEChannels)(TileLinkChannelCParameter(addressWidth, sourceWidth, dataWidth, sizeWidth))
-  def channelDParameter: TileLinkChannelDParameter         =
+  def channelDParameter: TileLinkChannelDParameter =
     TileLinkChannelDParameter(sourceWidth, sinkWidth, dataWidth, sizeWidth)
   def channelEParameter: Option[TileLinkChannelEParameter] =
     Option.when(hasBCEChannels)(TileLinkChannelEParameter(sinkWidth))

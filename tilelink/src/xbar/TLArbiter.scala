@@ -12,8 +12,8 @@ import bundle._
 import upickle.default.{macroRW, ReadWriter => RW}
 
 sealed trait TLArbiterPolicy
-object TLArbiterPolicy    {
-  case object Priority   extends TLArbiterPolicy {
+object TLArbiterPolicy {
+  case object Priority extends TLArbiterPolicy {
     implicit val rw: RW[this.type] = macroRW
   }
   case object RoundRobin extends TLArbiterPolicy {
@@ -23,33 +23,33 @@ object TLArbiterPolicy    {
 }
 
 case class TLArbiterParameter(
-                               policy:              TLArbiterPolicy,
-                               inputLinkParameters: Seq[TLChannelParameter],
-                               outputLinkParameter: TLChannelParameter)
-  extends chisel3.experimental.SerializableModuleParameter
+  policy:              TLArbiterPolicy,
+  inputLinkParameters: Seq[TLChannelParameter],
+  outputLinkParameter: TLChannelParameter)
+    extends chisel3.experimental.SerializableModuleParameter
 object TLArbiterParameter {
   implicit val rw: RW[TLArbiterParameter] = macroRW
 }
 
 class TLArbiter(val parameter: TLArbiterParameter)
-  extends Module
+    extends Module
     with chisel3.experimental.SerializableModule[TLArbiterParameter] {
 
   // (width, valid_s, select) => ready_s
   val policyImpl: (Integer, UInt, Bool) => UInt = {
     parameter.policy match {
-      case TLArbiterPolicy.Priority   =>
+      case TLArbiterPolicy.Priority =>
         (width, valids, _) => (~(scanLeftOr(valids) << 1)(width - 1, 0)).asUInt
       case TLArbiterPolicy.RoundRobin =>
         (width, valids, select) =>
           if (width == 1) 1.U(1.W)
           else {
-            val valid   = valids(width - 1, 0)
+            val valid = valids(width - 1, 0)
             assert(valid === valids)
-            val mask    = RegInit(((BigInt(1) << width) - 1).U(width - 1, 0))
+            val mask = RegInit(((BigInt(1) << width) - 1).U(width - 1, 0))
             val filter = Cat(scanRightOr(valid & ~mask), valid)
             val unready = (filter >> 1).asUInt | (mask << width).asUInt
-            val readys  = (~((unready >> width).asUInt & unready(width - 1, 0))).asUInt
+            val readys = (~((unready >> width).asUInt & unready(width - 1, 0))).asUInt
             when(select && valid.orR) {
               mask := scanLeftOr(readys & valid)
             }
@@ -58,7 +58,7 @@ class TLArbiter(val parameter: TLArbiterParameter)
     }
   }
 
-  val sink    = IO(
+  val sink = IO(
     Flipped(
       DecoupledIO(TLChannelParameter.bundle(parameter.outputLinkParameter))
     )
@@ -67,15 +67,15 @@ class TLArbiter(val parameter: TLArbiterParameter)
 
   if (parameter.inputLinkParameters.isEmpty) {
     sink.valid := false.B
-    sink.bits  := DontCare
+    sink.bits := DontCare
   } else if (parameter.inputLinkParameters.size == 1) {
     sink <> sources.head
   } else {
     val beatsIn = sources.map(s => TLLink.numBeatsMinus1(s.bits))
 
     val beatsLeft = RegInit(0.U)
-    val idle      = beatsLeft === 0.U
-    val latch     = idle && sink.ready // TODO: winner (if any) claims sink
+    val idle = beatsLeft === 0.U
+    val latch = idle && sink.ready // TODO: winner (if any) claims sink
 
     // Who wants access to the sink?
     val valids = sources.map(_.valid)
@@ -94,11 +94,11 @@ class TLArbiter(val parameter: TLArbiterParameter)
 
     // Track remaining beats
     val maskedBeats = winner.zip(beatsIn).map { case (w, b) => Mux(w, b, 0.U) }
-    val initBeats   = maskedBeats.reduce(_ | _) // no winner => 0 beats
+    val initBeats = maskedBeats.reduce(_ | _) // no winner => 0 beats
     beatsLeft := Mux(latch, initBeats, beatsLeft - sink.fire)
 
     // The one-hot source granted access in the previous cycle
-    val state    = RegInit(VecInit(Seq.fill(sources.size)(false.B)))
+    val state = RegInit(VecInit(Seq.fill(sources.size)(false.B)))
     val muxState = Mux(idle, winner, state)
     state := muxState
 
