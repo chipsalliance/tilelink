@@ -330,8 +330,14 @@ Crossbar::Crossbar(sparta::TreeNode *node, const Parameters *params, const std::
     sources_.reserve(params_->sources);
 
     // Populate router
-    for(std::size_t i = 0; i < params_->sources; ++i)
-      routing_.add(i, params_->ranges.getValue()[i]);
+    for(std::size_t i = 0; i < params_->sources; ++i) {
+      auto &range = params_->ranges.getValue()[i];
+      // TODO: validator
+      routing_.add(i, std::make_pair(
+        range[0],
+        range[1]
+      ));
+    }
 
     // Construct bundles
     std::vector<std::size_t> source_sizes(params_->sources);

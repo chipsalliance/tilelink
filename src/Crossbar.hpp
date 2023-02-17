@@ -29,7 +29,7 @@ class Crossbar : sparta::Unit {
     PARAMETER(uint32_t, sources, 1, "Number of sources (input slaves)")
     PARAMETER(uint32_t, sinks, 1, "Number of sinks (output masters)")
     // TODO: Arbitrary address width
-    typedef std::vector<std::pair<uint64_t, uint64_t>> AddrRanges;
+    typedef std::vector<std::vector<uint64_t>> AddrRanges;
     typedef std::vector<std::vector<bool>> ConnectivityMatrix;
     typedef std::vector<std::size_t> IDSize;
     PARAMETER(AddrRanges, ranges, {}, "Ranges of addresses for each sink")

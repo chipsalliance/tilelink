@@ -21,7 +21,7 @@ public:
 
   void propose(size_t sink_id, Payload &&data) {
     sparta_assert(!pendings[sink_id].has_value(), "Sink " << sink_id << " has unhandled data");
-    pendings[sink_id] = make_optional(data);
+    pendings[sink_id] = { data };
   }
 
   // Returns idx of accepted sink, and if there is new data
