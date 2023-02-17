@@ -71,9 +71,9 @@ struct TLDMsg {
   }
 };
 
-template<typename Ident = uint64_t>
+template<typename Types = DefaultTypes>
 struct TLEMsg {
-  Ident sink;
+  typename Types::Ident sink;
 
   uint8_t get_size() const {
     return 1; // E channels have no locks

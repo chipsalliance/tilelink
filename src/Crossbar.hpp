@@ -13,6 +13,12 @@
 
 struct SinkBundle;
 struct SourceBundle;
+struct AddressDecoder {
+  // start -> (idx, len)
+  std::map<size_t, std::pair<size_t, size_t>> mapping;
+  void add(size_t idx, std::pair<size_t, size_t> range);
+  std::optional<std::size_t> decode(std::size_t input) const;
+};
 
 class Crossbar : sparta::Unit {
   friend SinkBundle;
@@ -35,6 +41,7 @@ class Crossbar : sparta::Unit {
   Crossbar(sparta::TreeNode *node, const Parameters *params, const std::string &name);
 private:
   const Parameters *params_;
+  AddressDecoder routing_;
   std::vector<std::unique_ptr<SinkBundle>> sinks_;
   std::vector<std::unique_ptr<SourceBundle>> sources_;
 };

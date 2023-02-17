@@ -13,21 +13,21 @@
 #include "TLMsg.hpp"
 
 template<HasSize Payload>
-class TLChannelSink : sparta::PortSet {
+struct TLChannelSink : sparta::PortSet {
   using sparta::PortSet::PortSet;
   sparta::DataInPort<Payload> data{ this, "data" };
   sparta::SignalOutPort accept{ this, "accept" };
 };
 
 template<HasSize Payload>
-class TLChannelSource : sparta::PortSet {
+struct TLChannelSource : sparta::PortSet {
   using sparta::PortSet::PortSet;
   sparta::DataOutPort<Payload> data{ this, "data" };
   sparta::SignalInPort accept{ this, "accept" };
 };
 
 template<typename Types = DefaultTypes>
-class TLBundleSink : sparta::PortSet {
+struct TLBundleSink : sparta::PortSet {
   using sparta::PortSet::PortSet;
   TLChannelSink<TLABMsg<Types>> a{ this, "a" };
   TLChannelSource<TLABMsg<Types>> b{ this, "b" };
@@ -37,7 +37,7 @@ class TLBundleSink : sparta::PortSet {
 };
 
 template<typename Types = DefaultTypes>
-class TLBundleSource : sparta::PortSet {
+struct TLBundleSource : sparta::PortSet {
   using sparta::PortSet::PortSet;
   TLChannelSource<TLABMsg<Types>> a{ this, "a" };
   TLChannelSink<TLABMsg<Types>> b{ this, "b" };
