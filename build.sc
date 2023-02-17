@@ -81,6 +81,9 @@ object tests extends Module {
       v.mainargs
     ))
 
+    // TODO: use Cross to support multiple config files for testing.
+    def config: T[PathRef] = T { PathRef(os.pwd / "config.json") }
+
     // TODO: add config as input to elaborate
     def elaborate = T {
       // class path for `moduleDeps` is only a directory, not a jar, which breaks the cache.
@@ -91,6 +94,7 @@ object tests extends Module {
         runClasspath().map(_.path),
         Seq(
           "--dir", T.dest.toString,
+          "--json", config().path.toString
         ),
       )
       PathRef(T.dest)
