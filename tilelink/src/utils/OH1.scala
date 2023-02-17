@@ -7,6 +7,14 @@ package utils
 import chisel3._
 import chisel3.util.{Cat, OHToUInt}
 
+/**
+  * Utilities for one-hot-1s encoding.
+  *
+  * For a value x, one-hot encoding puts a single 1 on the x-th bit, while one-hot-1s encoding puts x consecutive 1's
+  * on the least-significant x bits in the encoded value.
+  *
+  * Example: UIntToOH1(4.U, 8) => b00001111
+  */
 object OH1 {
   def OH1ToOH(x: UInt): UInt =
     ((x << 1).asUInt | 1.U) & (~Cat(0.U(1.W), x)).asUInt

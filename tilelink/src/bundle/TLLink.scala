@@ -41,7 +41,11 @@ object TLLink {
     x.elements.get("size").map(_.asUInt)
   }
 
+  /**
+    * Circuit generating total number of data beats in current transaction minus 1.
+    */
   def numBeatsMinus1(x: TLChannel): UInt = {
+    // exploit the fact that the OH1 encoding of size is exactly size of transaction in bytes minus 1 (2^size - 1)
     x match {
       case a: TLChannelA => (UIntToOH1(a.size, a.parameter.sizeWidth) >> log2Ceil(a.parameter.dataWidth / 8)).asUInt
       case a: TLChannelB => (UIntToOH1(a.size, a.parameter.sizeWidth) >> log2Ceil(a.parameter.dataWidth / 8)).asUInt
