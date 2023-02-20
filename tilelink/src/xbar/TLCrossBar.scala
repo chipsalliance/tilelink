@@ -42,10 +42,10 @@ class TLCrossBar(val parameter: TLCrossBarParameter)
     Vec(parameter.masters.size, new TLLink(parameter.commonLinkParameter))
   )
   val slaveLinksRemapped = Wire(
-    Vec(parameter.slaves.size, new TLLink(parameter.commonLinkParameter))
+    Vec(parameter.slaves.size, Flipped(new TLLink(parameter.commonLinkParameter)))
   )
 
-  private def trim(id: UInt, size: Int): UInt = id(log2Ceil(size) - 1, 0)
+  private def trim(id: UInt, size: Int): UInt = if (size <= 1) 0.U else id(log2Ceil(size) - 1, 0)
 
   // id remapping
   parameter.adReachableIO
@@ -111,20 +111,20 @@ class TLCrossBar(val parameter: TLCrossBarParameter)
     .foreach {
       case (connects, io, remapped, range) =>
         if (connects.exists(x => x)) {
-          remapped.a :<>= io.a
+          io.a :<>= remapped.a
 
-          io.d :<>= remapped.d
-          io.d.bits.sink := trim(remapped.d.bits.sink, range.size)
+          remapped.d :<>= io.d
+          remapped.d.bits.sink := io.e.bits.sink | range.start.U
         } else {
-          remapped.a.valid := false.B
-          remapped.a.bits := DontCare
-          io.a.ready := false.B
+          io.a.valid := false.B
           io.a.bits := DontCare
+          remapped.a.ready := false.B
+          remapped.a.bits := DontCare
 
-          io.d.valid := false.B
-          io.d.bits := DontCare
-          remapped.d.ready := false.B
+          remapped.d.valid := false.B
           remapped.d.bits := DontCare
+          io.d.ready := false.B
+          io.d.bits := DontCare
         }
     }
 
@@ -135,26 +135,26 @@ class TLCrossBar(val parameter: TLCrossBarParameter)
     .foreach {
       case (connects, io, remapped, range) =>
         if (connects.exists(x => x)) {
-          io.b :<>= remapped.b
-          remapped.c :<>= io.c
-          remapped.e :<>= io.e
+          remapped.b :<>= io.b
+          io.c :<>= remapped.c
+          io.e :<>= remapped.e
 
-          remapped.e.bits.sink := io.e.bits.sink | range.start.U
+          io.e.bits.sink := trim(remapped.e.bits.sink, range.size)
         } else {
-          io.b.valid := false.B
-          io.b.bits := DontCare
-          remapped.b.ready := false.B
+          remapped.b.valid := false.B
           remapped.b.bits := DontCare
+          io.b.ready := false.B
+          io.b.bits := DontCare
 
-          remapped.c.valid := false.B
-          remapped.c.bits := DontCare
-          io.c.ready := false.B
+          io.c.valid := false.B
           io.c.bits := DontCare
+          remapped.c.ready := false.B
+          remapped.c.bits := DontCare
 
-          remapped.e.valid := false.B
-          remapped.e.bits := DontCare
-          io.e.ready := false.B
+          io.e.valid := false.B
           io.e.bits := DontCare
+          remapped.e.ready := false.B
+          remapped.e.bits := DontCare
         }
     }
 

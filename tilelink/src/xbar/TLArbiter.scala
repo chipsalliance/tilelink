@@ -58,12 +58,8 @@ class TLArbiter(val parameter: TLArbiterParameter)
     }
   }
 
-  val sink = IO(
-    Flipped(
-      DecoupledIO(TLChannelParameter.bundle(parameter.outputLinkParameter))
-    )
-  )
-  val sources = parameter.inputLinkParameters.map(p => IO(DecoupledIO(TLChannelParameter.bundle(p))))
+  val sink = IO(DecoupledIO(TLChannelParameter.bundle(parameter.outputLinkParameter)))
+  val sources = parameter.inputLinkParameters.map(p => IO(Flipped(DecoupledIO(TLChannelParameter.bundle(p)))))
 
   if (parameter.inputLinkParameters.isEmpty) {
     sink.valid := false.B
