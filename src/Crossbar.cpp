@@ -93,7 +93,7 @@ struct SinkBundle {
     d_arb(reachable_downstream.size()),
     notify_b(&parent->unit_event_set_, "notify_b_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SinkBundle, next_b)),
     notify_d(&parent->unit_event_set_, "notify_d_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SinkBundle, next_d)),
-    port(std::make_unique<TLBundleSink<>>(&parent->unit_port_set_, "sink_" + std::to_string(idx)))
+    port(std::make_unique<TLBundleSink<>>(&parent->unit_port_set_, "sink_" + std::to_string(idx), "Sink at " + std::to_string(idx)))
   {
     port->a.data.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
       SinkBundle, data_a, TLABMsg<>
@@ -153,7 +153,7 @@ struct SourceBundle {
     notify_a(&parent->unit_event_set_, "notify_a_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SourceBundle, next_a)),
     notify_c(&parent->unit_event_set_, "notify_c_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SourceBundle, next_c)),
     notify_e(&parent->unit_event_set_, "notify_e_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SourceBundle, next_e)),
-    port(std::make_unique<TLBundleSource<>>(&parent->unit_port_set_, "source_" + std::to_string(idx)))
+    port(std::make_unique<TLBundleSource<>>(&parent->unit_port_set_, "source_" + std::to_string(idx), "Source at " + std::to_string(idx)))
   {
     port->b.data.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
       SourceBundle, data_b, TLABMsg<>

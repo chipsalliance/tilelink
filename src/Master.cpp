@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Master.hpp"
 #include "TLMsg.hpp"
 
@@ -5,7 +7,7 @@ const char *Master::name = "master";
 
 Master::Master(sparta::TreeNode *node, const Parameters *params)
   : sparta::Unit(node, name)
-  , port(std::make_unique<TLBundleSource<>>(&unit_port_set_, "port"))
+  , port(std::make_unique<TLBundleSource<>>(node, "port", "Master port"))
   , dist_a_downstream(0, params->downstreams.getValue().size() - 1)
   , params(params)
 {
@@ -18,6 +20,8 @@ Master::Master(sparta::TreeNode *node, const Parameters *params)
 
   port->a.accept.registerConsumerHandler(CREATE_SPARTA_HANDLER(Master, accept_a));
   port->d.data.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Master, data_d, TLDMsg<>));
+
+  params->id.ignore();
 
   // Kickstart
   sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Master, send_a));
@@ -49,10 +53,15 @@ void Master::send_a() {
 
     .corrupt = false,
   };
+  std::cout<<getClock()->currentCycle()<<"[Meow] Master " << params->id.getValue() << " sending A: "<<msg<<std::endl;
   port->a.data.send(msg);
 }
 
 void Master::data_d(const TLDMsg<> &msg) {
-  if(params->id.getValue() != 0)
-    std::cout << "Master " << params->id.getValue() << " received data: " << msg << std::endl;
+  std::cout <<getClock()->currentCycle()<< "[Meow] Master " << params->id.getValue() << " received D: " << msg << std::endl;
+  next_d.schedule();
+}
+
+void Master::grant_d() {
+  port->d.accept.send();
 }

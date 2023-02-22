@@ -27,6 +27,7 @@ void Simulator::buildTree_() {
       getResourceSet()->getResourceFactory(Master::name));
   to_delete_.emplace_back(master);
 
+  // Create slave
   sparta::ResourceTreeNode *slave = new sparta::ResourceTreeNode(
       getRoot(), "slave", sparta::TreeNode::GROUP_NAME_NONE,
       sparta::TreeNode::GROUP_IDX_NONE, "Slave node",
@@ -39,8 +40,10 @@ void Simulator::configureTree_() {
 }
 
 void Simulator::bindTree_() {
+  std::cout<<"Before bind"<<std::endl;
   sparta::TreeNode* root = getRoot();
   auto master = root->getChild("master")->getResourceAs<Master>();
   auto slave = root->getChild("slave")->getResourceAs<Slave>();
   master->port->bind(*slave->port);
+  std::cout<<"Bound"<<std::endl;
 }

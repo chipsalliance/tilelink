@@ -37,6 +37,12 @@ private:
     1
   };
 
+  sparta::UniqueEvent<> next_d {
+    &unit_event_set_, "next_d",
+    CREATE_SPARTA_HANDLER(Master, grant_d),
+    1
+  };
+
   RandGen gen_a;
   const Parameters *params;
 
@@ -47,6 +53,7 @@ private:
   void send_a();
   void accept_a();
   void data_d(const TLDMsg<> &msg);
+  void grant_d();
 };
 
 #endif // __MASTER_H__

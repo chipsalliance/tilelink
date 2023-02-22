@@ -49,7 +49,7 @@ struct TLOp {
 
 
   friend std::ostream &operator<<(std::ostream &os, const TLOp &op) {
-    os << "TLOp{code=" << tl_opcode_to_str(op.code) << ", param=" << op.param << "}";
+    os << "TLOp{code=" << tl_opcode_to_str(op.code) << ", param=" << (uint64_t) op.param << "}";
     return os;
   }
 };
@@ -74,8 +74,8 @@ struct TLABMsg {
 
   friend std::ostream &operator<<(std::ostream &os, const TLABMsg &msg) {
     os << "TLABMsg{source=" << msg.source << ", op=" << msg.op
-       << ", addr=" << msg.addr << ", size=" << msg.size
-       << ", data=" << msg.data << ", mask=" << msg.mask
+       << ", addr=" << msg.addr << ", size=" << (uint64_t) msg.size
+       << ", data=" << msg.data << ", mask=" << (uint64_t) msg.mask
        << ", corrupt=" << msg.corrupt << "}";
     return os;
   }
@@ -100,7 +100,7 @@ struct TLCMsg {
 
   friend std::ostream &operator<<(std::ostream &os, const TLCMsg &msg) {
     os << "TLCMsg{source=" << msg.source << ", op=" << msg.op
-       << ", addr=" << msg.addr << ", size=" << msg.size
+       << ", addr=" << msg.addr << ", size=" << (uint64_t) msg.size
        << ", data=" << msg.data << ", corrupt=" << msg.corrupt << "}";
     return os;
   }
@@ -126,7 +126,7 @@ struct TLDMsg {
 
   friend std::ostream &operator<<(std::ostream &os, const TLDMsg &msg) {
     os << "TLDMsg{source=" << msg.source << ", sink=" << msg.sink
-       << ", op=" << msg.op << ", size=" << msg.size
+       << ", op=" << msg.op << ", size=" << (uint64_t) msg.size
        << ", data=" << msg.data << ", denied=" << msg.denied
        << ", corrupt=" << msg.corrupt << "}";
     return os;
