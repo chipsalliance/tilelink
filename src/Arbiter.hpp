@@ -27,11 +27,12 @@ public:
   // Returns idx of accepted sink, and if there is new data
   size_t accept() {
     sparta_assert(!idle, "Can only accept when there is outstanding request");
-    sparta_assert(remaining == 0, "Arbiter is idle");
+    sparta_assert(remaining != 0, "Arbiter is idle");
     sparta_assert(pendings[locked].has_value(), "Sink " << locked << " has no data");
 
     pendings[locked].reset();
     --remaining;
+    idle = true;
 
     // Send accept to upstream
     return locked;
@@ -46,7 +47,7 @@ public:
       if(pendings[probe].has_value()) {
         locked = probe;
         remaining = pendings[probe].value().get_beats();
-        idle = true;
+        idle = false;
         return pendings[probe];
       }
 

@@ -28,6 +28,7 @@ Master::Master(sparta::TreeNode *node, const Parameters *params)
 }
 
 void Master::accept_a() {
+  std::cout<<getClock()->currentCycle()<<" [Meow] Master " << params->id.getValue() << " A accepted."<<std::endl;
   next_a.schedule();
 }
 
@@ -53,12 +54,12 @@ void Master::send_a() {
 
     .corrupt = false,
   };
-  std::cout<<getClock()->currentCycle()<<"[Meow] Master " << params->id.getValue() << " sending A: "<<msg<<std::endl;
+  std::cout<<getClock()->currentCycle()<<" [Meow] Master " << params->id.getValue() << " sending A: "<<msg<<std::endl;
   port->a.data.send(msg);
 }
 
 void Master::data_d(const TLDMsg<> &msg) {
-  std::cout <<getClock()->currentCycle()<< "[Meow] Master " << params->id.getValue() << " received D: " << msg << std::endl;
+  std::cout <<getClock()->currentCycle()<< " [Meow] Master " << params->id.getValue() << " received D: " << msg << std::endl;
   next_d.schedule();
 }
 

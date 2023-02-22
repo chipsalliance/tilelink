@@ -16,21 +16,23 @@ struct IDMapper {
   std::map<std::size_t, std::size_t> inv;
   size_t upper;
 
-  // 0 size = skip
-  IDMapper(const std::vector<std::size_t> &sizes) : starts(sizes.size()) {
+  IDMapper(const std::vector<std::optional<std::size_t>> &sizes) : starts(sizes.size()) {
     std::vector<std::size_t> indices(sizes.size());
     for(std::size_t i = 0; i < sizes.size(); ++i) indices[i] = i;
     stable_sort(indices.begin(), indices.end(), [&sizes](std::size_t a, std::size_t b) {
-      return sizes[a] > sizes[b]; // Sort big to small
+      if(sizes[a].has_value() && sizes[b].has_value()) return sizes[a] > sizes[b]; // Sort big to small
+      if(sizes[a].has_value()) return true; // let empty ones go to the end
+      return false;
     });
 
     // Accumelate
     std::size_t last = 0;
     for(const auto &i : indices) {
-      starts[i] = std::make_pair(last, sizes[i]);
-      if(sizes[i] == 0) continue;
-      inv.emplace(last, i);
-      last += 1 << sizes[i];
+      size_t size = 0;
+      if(const auto &s = sizes[i]) size = 1 << *s;
+      starts[i] = std::make_pair(last, size);
+      if(size != 0) inv.emplace(last, i);
+      last += size;
     }
 
     upper = last;
@@ -80,21 +82,24 @@ struct SinkBundle {
   LockingArbiter<TLABMsg<>> b_arb;
   LockingArbiter<TLDMsg<>> d_arb;
 
-  sparta::UniqueEvent<> notify_b;
-  sparta::UniqueEvent<> notify_d;
+  sparta::UniqueEvent<> notify_b{&parent->unit_event_set_,
+                                 "notify_b_" + std::to_string(idx),
+                                 CREATE_SPARTA_HANDLER(SinkBundle, next_b)};
+  sparta::UniqueEvent<> notify_d{&parent->unit_event_set_,
+                                 "notify_d_" + std::to_string(idx),
+                                 CREATE_SPARTA_HANDLER(SinkBundle, next_d)};
 
-  SinkBundle(size_t idx, Crossbar *parent, std::vector<std::size_t> reachable_downstream, std::vector<std::optional<std::size_t>> reachable_downstream_inv, std::vector<std::size_t> source_sizes):
-    idx(idx),
-    parent(parent),
-    reachable_downstream(reachable_downstream),
-    reachable_downstream_inv(reachable_downstream_inv),
-    downstream_ids(source_sizes),
-    b_arb(reachable_downstream.size()),
-    d_arb(reachable_downstream.size()),
-    notify_b(&parent->unit_event_set_, "notify_b_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SinkBundle, next_b)),
-    notify_d(&parent->unit_event_set_, "notify_d_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SinkBundle, next_d)),
-    port(std::make_unique<TLBundleSink<>>(&parent->unit_port_set_, "sink_" + std::to_string(idx), "Sink at " + std::to_string(idx)))
-  {
+  SinkBundle(size_t idx, Crossbar *parent,
+             std::vector<std::size_t> reachable_downstream,
+             std::vector<std::optional<std::size_t>> reachable_downstream_inv,
+             std::vector<std::optional<std::size_t>> source_sizes)
+      : idx(idx), parent(parent), reachable_downstream(reachable_downstream),
+        reachable_downstream_inv(reachable_downstream_inv),
+        downstream_ids(source_sizes), b_arb(reachable_downstream.size()),
+        d_arb(reachable_downstream.size()),
+        port(std::make_unique<TLBundleSink<>>(
+            parent->self, "sink_" + std::to_string(idx),
+            "Sink at " + std::to_string(idx))) {
     port->a.data.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
       SinkBundle, data_a, TLABMsg<>
     ));
@@ -137,24 +142,27 @@ struct SourceBundle {
   LockingArbiter<TLCMsg<>> c_arb;
   LockingArbiter<TLEMsg<>> e_arb;
 
-  sparta::UniqueEvent<> notify_a;
-  sparta::UniqueEvent<> notify_c;
-  sparta::UniqueEvent<> notify_e;
+  sparta::UniqueEvent<> notify_a{&parent->unit_event_set_,
+                                 "notify_a_" + std::to_string(idx),
+                                 CREATE_SPARTA_HANDLER(SourceBundle, next_a)};
+  sparta::UniqueEvent<> notify_c{&parent->unit_event_set_,
+                                 "notify_c_" + std::to_string(idx),
+                                 CREATE_SPARTA_HANDLER(SourceBundle, next_c)};
+  sparta::UniqueEvent<> notify_e{&parent->unit_event_set_,
+                                 "notify_e_" + std::to_string(idx),
+                                 CREATE_SPARTA_HANDLER(SourceBundle, next_e)};
 
-  SourceBundle(size_t idx, Crossbar *parent, std::vector<std::size_t> reachable_upstream, std::vector<std::optional<std::size_t>> reachable_upstream_inv, std::vector<std::size_t> sink_sizes):
-    idx(idx),
-    parent(parent),
-    reachable_upstream(reachable_upstream),
-    reachable_upstream_inv(reachable_upstream_inv),
-    upstream_ids(sink_sizes),
-    a_arb(reachable_upstream.size()),
-    c_arb(reachable_upstream.size()),
-    e_arb(reachable_upstream.size()),
-    notify_a(&parent->unit_event_set_, "notify_a_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SourceBundle, next_a)),
-    notify_c(&parent->unit_event_set_, "notify_c_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SourceBundle, next_c)),
-    notify_e(&parent->unit_event_set_, "notify_e_" + std::to_string(idx), CREATE_SPARTA_HANDLER(SourceBundle, next_e)),
-    port(std::make_unique<TLBundleSource<>>(&parent->unit_port_set_, "source_" + std::to_string(idx), "Source at " + std::to_string(idx)))
-  {
+  SourceBundle(size_t idx, Crossbar *parent,
+               std::vector<std::size_t> reachable_upstream,
+               std::vector<std::optional<std::size_t>> reachable_upstream_inv,
+               std::vector<std::optional<std::size_t>> sink_sizes)
+      : idx(idx), parent(parent), reachable_upstream(reachable_upstream),
+        reachable_upstream_inv(reachable_upstream_inv),
+        upstream_ids(sink_sizes), a_arb(reachable_upstream.size()),
+        c_arb(reachable_upstream.size()), e_arb(reachable_upstream.size()),
+        port(std::make_unique<TLBundleSource<>>(
+            parent->self, "source_" + std::to_string(idx),
+            "Source at " + std::to_string(idx))) {
     port->b.data.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(
       SourceBundle, data_b, TLABMsg<>
     ));
@@ -198,7 +206,7 @@ void SinkBundle::data_a(const TLABMsg<> &msg) {
   auto &source = parent->sources_[downstream.value()];
   auto number = source->reachable_upstream_inv[idx].value();
   source->a_arb.propose(number, std::move(updated_msg));
-  source->notify_a.schedule();
+  source->next_a();
 }
 
 void SinkBundle::data_c(const TLCMsg<> &msg) {
@@ -214,7 +222,7 @@ void SinkBundle::data_c(const TLCMsg<> &msg) {
   auto &source = parent->sources_[downstream.value()];
   auto number = source->reachable_upstream_inv[idx].value();
   source->c_arb.propose(number, std::move(updated_msg));
-  source->notify_c.schedule();
+  source->next_c();
 }
 
 void SinkBundle::data_e(const TLEMsg<> &msg) {
@@ -226,21 +234,21 @@ void SinkBundle::data_e(const TLEMsg<> &msg) {
   auto &source = parent->sources_[downstream];
   auto number = source->reachable_upstream_inv[idx].value();
   source->e_arb.propose(number, std::move(updated_msg));
-  source->notify_e.schedule();
+  source->next_e();
 }
 
 void SinkBundle::accept_b() {
   auto downstream = b_arb.accept();
   parent->sources_[downstream]->port->b.accept.send();
 
-  notify_b.schedule();
+  next_b();
 }
 
 void SinkBundle::accept_d() {
   auto downstream = d_arb.accept();
   parent->sources_[downstream]->port->d.accept.send();
 
-  notify_d.schedule();
+  next_d();
 }
 
 void SinkBundle::next_b() {
@@ -264,7 +272,7 @@ void SourceBundle::data_b(const TLABMsg<> &msg) {
   auto &sink = parent->sinks_[upstream];
   auto number = sink->reachable_downstream_inv[idx].value();
   sink->b_arb.propose(number, std::move(updated_msg));
-  sink->notify_b.schedule();
+  sink->next_b();
 }
 
 void SourceBundle::data_d(const TLDMsg<> &msg) {
@@ -279,28 +287,28 @@ void SourceBundle::data_d(const TLDMsg<> &msg) {
   auto &sink = parent->sinks_[upstream];
   auto number = sink->reachable_downstream_inv[idx].value();
   sink->d_arb.propose(number, std::move(updated_msg));
-  sink->notify_d.schedule();
+  sink->next_d();
 }
 
 void SourceBundle::accept_a() {
   auto upstream = a_arb.accept();
   parent->sinks_[upstream]->port->a.accept.send();
 
-  notify_a.schedule();
+  next_a();
 }
 
 void SourceBundle::accept_c() {
   auto upstream = c_arb.accept();
   parent->sinks_[upstream]->port->c.accept.send();
 
-  notify_c.schedule();
+  next_c();
 }
 
 void SourceBundle::accept_e() {
   auto upstream = e_arb.accept();
   parent->sinks_[upstream]->port->e.accept.send();
 
-  notify_e.schedule();
+  next_e();
 }
 
 void SourceBundle::next_a() {
@@ -323,6 +331,7 @@ void SourceBundle::next_e() {
 
 Crossbar::Crossbar(sparta::TreeNode *node, const Parameters *params) :
   sparta::Unit(node, name),
+  self(node),
   params_(params) {
     // TODO: validate parameter dimensions
     // TODO: validate ID widths
@@ -341,9 +350,8 @@ Crossbar::Crossbar(sparta::TreeNode *node, const Parameters *params) :
     }
 
     // Construct bundles
-    std::vector<std::size_t> source_sizes(params_->sources);
     for(std::size_t i = 0; i < params_->sinks; ++i) {
-      std::vector<std::size_t> source_sizes(params_->sources);
+      std::vector<std::optional<std::size_t>> source_sizes(params_->sources);
       std::vector<std::size_t> reachable_downstream;
       std::vector<std::optional<std::size_t>> reachable_downstream_inv(params_->sources);
       for(std::size_t j = 0; j < params_->sources; ++j) {
@@ -351,8 +359,6 @@ Crossbar::Crossbar(sparta::TreeNode *node, const Parameters *params) :
           source_sizes[j] = params_->downstream_sizes.getValue()[j];
           reachable_downstream.push_back(j);
           reachable_downstream_inv[j] = reachable_downstream.size() - 1;
-        } else {
-          source_sizes[j] = 0;
         }
       }
       sinks_.emplace_back(std::make_unique<SinkBundle>(
@@ -361,7 +367,7 @@ Crossbar::Crossbar(sparta::TreeNode *node, const Parameters *params) :
     }
 
     for(std::size_t i = 0; i < params_->sources; ++i) {
-      std::vector<std::size_t> sink_sizes(params_->sinks);
+      std::vector<std::optional<std::size_t>> sink_sizes(params_->sinks);
       std::vector<std::size_t> reachable_upstream;
       std::vector<std::optional<std::size_t>> reachable_upstream_inv(params_->sinks);
 
@@ -380,3 +386,10 @@ Crossbar::Crossbar(sparta::TreeNode *node, const Parameters *params) :
       ));
     }
   }
+
+void Crossbar::bind_sink(std::size_t idx, TLBundleSource<> &src) {
+  this->sinks_[idx]->port->bind(src);
+}
+void Crossbar::bind_src(std::size_t idx, TLBundleSink<> &sink) {
+  this->sources_[idx]->port->bind(sink);
+}

@@ -54,6 +54,7 @@ struct TLOp {
   }
 };
 
+// TODO: Split A and B
 template<typename Types = DefaultTypes>
 struct TLABMsg {
   typename Types::Ident source;
@@ -67,6 +68,14 @@ struct TLABMsg {
   bool corrupt;
 
   size_t get_beats() const {
+    if(op.code == TLOpCode::Get) return 1;
+
+    size_t full_size = 1 << size;
+    if(full_size < sizeof(typename Types::Data)) return 1;
+    return full_size / sizeof(typename Types::Data);
+  }
+
+  size_t get_response_beats() const {
     size_t full_size = 1 << size;
     if(full_size < sizeof(typename Types::Data)) return 1;
     return full_size / sizeof(typename Types::Data);
@@ -119,6 +128,8 @@ struct TLDMsg {
   bool corrupt;
 
   size_t get_beats() const {
+    if(op.code == TLOpCode::AccessAck) return 1;
+
     size_t full_size = 1 << size;
     if(full_size < sizeof(typename Types::Data)) return 1;
     return full_size / sizeof(typename Types::Data);

@@ -20,19 +20,35 @@ Simulator::~Simulator() {
 }
 
 void Simulator::buildTree_() {
+  // Create crossbar
+  sparta::ResourceTreeNode *crossbar = new sparta::ResourceTreeNode(
+      getRoot(), "crossbar", sparta::TreeNode::GROUP_NAME_NONE,
+      sparta::TreeNode::GROUP_IDX_NONE, "Crossbar node",
+      getResourceSet()->getResourceFactory(Crossbar::name));
+  to_delete_.emplace_back(crossbar);
+
+  auto params = dynamic_cast<Crossbar::Parameters *>(crossbar->getParameterSet());
+  sparta_assert(params != nullptr);
+  auto master_cnt = params->sinks.getValue();
+  auto slave_cnt = params->sources.getValue();
+
   // Create master
-  sparta::ResourceTreeNode *master = new sparta::ResourceTreeNode(
-      getRoot(), "master", sparta::TreeNode::GROUP_NAME_NONE,
-      sparta::TreeNode::GROUP_IDX_NONE, "Master node",
-      getResourceSet()->getResourceFactory(Master::name));
-  to_delete_.emplace_back(master);
+  for(size_t i = 0; i < master_cnt; ++i) {
+    sparta::ResourceTreeNode *master = new sparta::ResourceTreeNode(
+        getRoot(), "master_" + std::to_string(i), sparta::TreeNode::GROUP_NAME_NONE,
+        sparta::TreeNode::GROUP_IDX_NONE, "Master node " + std::to_string(i),
+        getResourceSet()->getResourceFactory(Master::name));
+    to_delete_.emplace_back(master);
+  }
 
   // Create slave
-  sparta::ResourceTreeNode *slave = new sparta::ResourceTreeNode(
-      getRoot(), "slave", sparta::TreeNode::GROUP_NAME_NONE,
-      sparta::TreeNode::GROUP_IDX_NONE, "Slave node",
-      getResourceSet()->getResourceFactory(Slave::name));
-  to_delete_.emplace_back(slave);
+  for(size_t i = 0; i < slave_cnt; ++i) {
+    sparta::ResourceTreeNode *slave = new sparta::ResourceTreeNode(
+        getRoot(), "slave_" + std::to_string(i), sparta::TreeNode::GROUP_NAME_NONE,
+        sparta::TreeNode::GROUP_IDX_NONE, "Slave node " + std::to_string(i),
+        getResourceSet()->getResourceFactory(Slave::name));
+    to_delete_.emplace_back(slave);
+  }
 }
 
 void Simulator::configureTree_() {
@@ -40,10 +56,18 @@ void Simulator::configureTree_() {
 }
 
 void Simulator::bindTree_() {
-  std::cout<<"Before bind"<<std::endl;
   sparta::TreeNode* root = getRoot();
-  auto master = root->getChild("master")->getResourceAs<Master>();
-  auto slave = root->getChild("slave")->getResourceAs<Slave>();
-  master->port->bind(*slave->port);
-  std::cout<<"Bound"<<std::endl;
+
+  auto crossbar = root->getChild("crossbar")->getResourceAs<Crossbar>();
+  auto params = crossbar->params_;
+  auto master_cnt = params->sinks.getValue();
+  auto slave_cnt = params->sources.getValue();
+  for(size_t i = 0; i < master_cnt; ++i) {
+    auto master = root->getChild("master_" + std::to_string(i))->getResourceAs<Master>();
+    crossbar->bind_sink(i, *master->port);
+  }
+  for(size_t i = 0; i < slave_cnt; ++i) {
+    auto slave = root->getChild("slave_" + std::to_string(i))->getResourceAs<Slave>();
+    crossbar->bind_src(i, *slave->port);
+  }
 }

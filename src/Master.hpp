@@ -21,8 +21,8 @@ public:
     using sparta::ParameterSet::ParameterSet;
     PARAMETER(uint64_t, seed, 0x19260817, "Seed for generating data")
     typedef std::vector<std::vector<uint64_t>> AddrRanges;
-    PARAMETER(AddrRanges, downstreams, {}, "Valid downstreams")
-    PARAMETER(uint64_t, id, 0, "Master id, 0 = disable logging")
+    sparta::Parameter<AddrRanges> downstreams {"downstreams", {{0, 0x100000000}}, "Valid downstreams", __this_ps};
+    PARAMETER(uint64_t, id, 0, "Master id")
   };
 
   Master(sparta::TreeNode *node, const Parameters *params);
@@ -40,7 +40,7 @@ private:
   sparta::UniqueEvent<> next_d {
     &unit_event_set_, "next_d",
     CREATE_SPARTA_HANDLER(Master, grant_d),
-    1
+    1 // FIXME: move this delay to the producer side
   };
 
   RandGen gen_a;

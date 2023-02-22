@@ -53,12 +53,12 @@ void Slave::send_d() {
     .corrupt = false,
   };
 
-  std::cout<<getClock()->currentCycle()<<"[Meow] Slave " << params->id.getValue() << " sending D: "<<msg<<std::endl;
+  std::cout<<getClock()->currentCycle()<<" [Meow] Slave " << params->id.getValue() << " sending D: "<<msg<<std::endl;
   port->d.data.send(msg);
 }
 
 void Slave::data_a(const TLABMsg<> &msg) {
-  std::cout<<getClock()->currentCycle()<<"[Meow] Slave " << params->id.getValue() << " received A: "<<msg<<std::endl;
+  std::cout<<getClock()->currentCycle()<<" [Meow] Slave " << params->id.getValue() << " received A: "<<msg<<std::endl;
   sparta_assert(!pending_a.has_value(), "Received A when there is already a pending A");
   pending_a = msg;
   if(!this->inflight.has_value()) this->sched_req();
@@ -71,7 +71,7 @@ void Slave::sched_req() {
   inflight = {
     .source = pending_a->source,
     .size = pending_a->size,
-    .remaining = pending_a->get_beats(),
+    .remaining = pending_a->get_response_beats(),
   };
 
   pending_a.reset();

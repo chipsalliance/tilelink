@@ -28,7 +28,7 @@ public:
   struct Parameters : sparta::ParameterSet {
     using sparta::ParameterSet::ParameterSet;
     PARAMETER(uint64_t, seed, 0x19260817, "Seed for generating data")
-    PARAMETER(uint64_t, id, 0, "Slave id, 0 = disable logging")
+    PARAMETER(uint64_t, id, 0, "Slave id")
   };
 
   Slave(sparta::TreeNode *node, const Parameters *params);
