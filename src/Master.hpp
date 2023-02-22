@@ -12,16 +12,22 @@
 #include "Rand.hpp"
 #include <random>
 
+class Simulator;
+
 class Master : public sparta::Unit {
+  friend Simulator;
 public:
   struct Parameters : sparta::ParameterSet {
+    using sparta::ParameterSet::ParameterSet;
     PARAMETER(uint64_t, seed, 0x19260817, "Seed for generating data")
     typedef std::vector<std::vector<uint64_t>> AddrRanges;
     PARAMETER(AddrRanges, downstreams, {}, "Valid downstreams")
     PARAMETER(uint64_t, id, 0, "Master id, 0 = disable logging")
   };
 
-  Master(sparta::TreeNode *node, const Parameters *params, const std::string &name);
+  Master(sparta::TreeNode *node, const Parameters *params);
+
+  static const char *name;
 
 private:
   std::unique_ptr<TLBundleSource<>> port;

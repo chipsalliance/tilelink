@@ -15,7 +15,7 @@ struct DefaultTypes {
 
 template<typename T>
 concept HasSize = requires(const T a) {
-  { a.get_size() } -> std::convertible_to<std::size_t>;
+  { a.get_beats() } -> std::convertible_to<std::size_t>;
 };
 
 enum class TLOpCode {
@@ -66,8 +66,10 @@ struct TLABMsg {
 
   bool corrupt;
 
-  uint8_t get_size() const {
-    return 1 << size;
+  size_t get_beats() const {
+    size_t full_size = 1 << size;
+    if(full_size < sizeof(typename Types::Data)) return 1;
+    return full_size / sizeof(typename Types::Data);
   }
 
   friend std::ostream &operator<<(std::ostream &os, const TLABMsg &msg) {
@@ -90,8 +92,10 @@ struct TLCMsg {
 
   bool corrupt;
 
-  uint8_t get_size() const {
-    return 1 << size;
+  size_t get_beats() const {
+    size_t full_size = 1 << size;
+    if(full_size < sizeof(typename Types::Data)) return 1;
+    return full_size / sizeof(typename Types::Data);
   }
 
   friend std::ostream &operator<<(std::ostream &os, const TLCMsg &msg) {
@@ -114,8 +118,10 @@ struct TLDMsg {
   bool denied;
   bool corrupt;
 
-  uint8_t get_size() const {
-    return 1 << size;
+  size_t get_beats() const {
+    size_t full_size = 1 << size;
+    if(full_size < sizeof(typename Types::Data)) return 1;
+    return full_size / sizeof(typename Types::Data);
   }
 
   friend std::ostream &operator<<(std::ostream &os, const TLDMsg &msg) {
@@ -131,7 +137,7 @@ template<typename Types = DefaultTypes>
 struct TLEMsg {
   typename Types::Ident sink;
 
-  uint8_t get_size() const {
+  size_t get_beats() const {
     return 1; // E channels have no locks
   }
 

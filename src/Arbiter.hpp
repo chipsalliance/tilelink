@@ -45,7 +45,7 @@ public:
     } else for(size_t probe = (locked + 1) % pendings.size();; probe = (probe + 1) % pendings.size()) {
       if(pendings[probe].has_value()) {
         locked = probe;
-        remaining = pendings[probe].value().get_size();
+        remaining = pendings[probe].value().get_beats();
         idle = true;
         return pendings[probe];
       }

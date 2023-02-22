@@ -1,7 +1,9 @@
 #include "Master.hpp"
 #include "TLMsg.hpp"
 
-Master::Master(sparta::TreeNode *node, const Parameters *params, const std::string &name)
+const char *Master::name = "master";
+
+Master::Master(sparta::TreeNode *node, const Parameters *params)
   : sparta::Unit(node, name)
   , port(std::make_unique<TLBundleSource<>>(&unit_port_set_, "port"))
   , dist_a_downstream(0, params->downstreams.getValue().size() - 1)
@@ -16,6 +18,9 @@ Master::Master(sparta::TreeNode *node, const Parameters *params, const std::stri
 
   port->a.accept.registerConsumerHandler(CREATE_SPARTA_HANDLER(Master, accept_a));
   port->d.data.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Master, data_d, TLDMsg<>));
+
+  // Kickstart
+  sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Master, send_a));
 }
 
 void Master::accept_a() {

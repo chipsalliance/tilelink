@@ -9,6 +9,7 @@
 #include "Crossbar.hpp"
 #include "TLMsg.hpp"
 
+const char *Crossbar::name = "crossbar";
 struct IDMapper {
   // Start, length
   std::vector<std::pair<std::size_t, std::size_t>> starts;
@@ -320,7 +321,7 @@ void SourceBundle::next_e() {
       port->e.data.send(*next);
 }
 
-Crossbar::Crossbar(sparta::TreeNode *node, const Parameters *params, const std::string &name) :
+Crossbar::Crossbar(sparta::TreeNode *node, const Parameters *params) :
   sparta::Unit(node, name),
   params_(params) {
     // TODO: validate parameter dimensions

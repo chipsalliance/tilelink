@@ -20,12 +20,13 @@ struct AddressDecoder {
   std::optional<std::size_t> decode(std::size_t input) const;
 };
 
-class Crossbar : sparta::Unit {
+class Crossbar : public sparta::Unit {
   friend SinkBundle;
   friend SourceBundle;
 
-  class Parameters : public sparta::ParameterSet {
-  public:
+public:
+  struct Parameters : public sparta::ParameterSet {
+    using sparta::ParameterSet::ParameterSet;
     PARAMETER(uint32_t, sources, 1, "Number of sources (input slaves)")
     PARAMETER(uint32_t, sinks, 1, "Number of sinks (output masters)")
     // TODO: Arbitrary address width
@@ -38,7 +39,9 @@ class Crossbar : sparta::Unit {
     PARAMETER(IDSize, upstream_sizes, {}, "ID sizes for each upstream links (sink)")
   };
 
-  Crossbar(sparta::TreeNode *node, const Parameters *params, const std::string &name);
+  Crossbar(sparta::TreeNode *node, const Parameters *params);
+  static const char *name;
+
 private:
   const Parameters *params_;
   AddressDecoder routing_;
