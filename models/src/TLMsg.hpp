@@ -4,7 +4,12 @@
 #include <concepts>
 #include <cstdint>
 #include <ostream>
+#include <string_view>
+#include <optional>
 #include <sparta/utils/SpartaAssert.hpp>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 struct DefaultTypes {
   typedef uint64_t Data;
@@ -43,15 +48,34 @@ static const char *tl_opcode_to_str(TLOpCode code) {
   sparta_assert(false, "Unknown TLOpCode: " << (int) code);
 }
 
+static const std::optional<TLOpCode> tl_opcode_from_str(const std::string_view &str) {
+  if(str == "Get") return TLOpCode::Get;
+  if(str == "AccessAckData") return TLOpCode::AccessAckData;
+  if(str == "PutFullData") return TLOpCode::PutFullData;
+  if(str == "PutPartialData") return TLOpCode::PutPartialData;
+  if(str == "AccessAck") return TLOpCode::AccessAck;
+  return std::nullopt;
+}
+
+static void to_json(json& j, const TLOpCode& opcode) {
+  j = tl_opcode_to_str(opcode);
+}
+
+static void from_json(json& j, TLOpCode& opcode) {
+  std::string_view str = j.get<std::string_view>();
+  opcode = tl_opcode_from_str(str).value();
+}
+
 struct TLOp {
   TLOpCode code;
   uint8_t param;
-
 
   friend std::ostream &operator<<(std::ostream &os, const TLOp &op) {
     os << "TLOp{code=" << tl_opcode_to_str(op.code) << ", param=" << (uint64_t) op.param << "}";
     return os;
   }
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(TLOp, code, param)
 };
 
 // TODO: Split A and B
@@ -88,6 +112,8 @@ struct TLABMsg {
        << ", corrupt=" << msg.corrupt << "}";
     return os;
   }
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(TLABMsg, source, op, addr, size, data, mask, corrupt)
 };
 
 template<typename Types = DefaultTypes>
@@ -113,6 +139,8 @@ struct TLCMsg {
        << ", data=" << msg.data << ", corrupt=" << msg.corrupt << "}";
     return os;
   }
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(TLCMsg, source, op, addr, size, data, corrupt)
 };
 
 template<typename Types = DefaultTypes>
@@ -142,6 +170,8 @@ struct TLDMsg {
        << ", corrupt=" << msg.corrupt << "}";
     return os;
   }
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(TLDMsg, source, sink, op, size, data, denied, corrupt)
 };
 
 template<typename Types = DefaultTypes>
@@ -156,6 +186,8 @@ struct TLEMsg {
     os << "TLEMsg{sink=" << msg.sink << "}";
     return os;
   }
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(TLEMsg, sink)
 };
 
 #endif // __TLMSG__

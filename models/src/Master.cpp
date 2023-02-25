@@ -1,5 +1,7 @@
 #include <iostream>
+#include <string>
 
+#include "GlobalLogger.hpp"
 #include "Master.hpp"
 #include "TLMsg.hpp"
 
@@ -28,7 +30,10 @@ Master::Master(sparta::TreeNode *node, const Parameters *params)
 }
 
 void Master::accept_a() {
-  std::cout<<getClock()->currentCycle()<<" [Meow] Master " << params->id.getValue() << " A accepted."<<std::endl;
+
+  GlobalLogger::put(std::string("master_") + std::to_string(params->id) +
+                        ".a.accepted",
+                    std::to_string(this->getClock()->currentCycle()));
   next_a.schedule();
 }
 
@@ -54,15 +59,27 @@ void Master::send_a() {
 
     .corrupt = false,
   };
-  std::cout<<getClock()->currentCycle()<<" [Meow] Master " << params->id.getValue() << " sending A: "<<msg<<std::endl;
+
+  TimedEvent<TLABMsg<>> ev {
+    .at = this->getClock()->currentCycle(),
+    .event = msg,
+  };
+  GlobalLogger::put_json(std::string("master_") + std::to_string(params->id) + ".a.propose", ev);
   port->a.data.send(msg);
 }
 
 void Master::data_d(const TLDMsg<> &msg) {
-  std::cout <<getClock()->currentCycle()<< " [Meow] Master " << params->id.getValue() << " received D: " << msg << std::endl;
+  TimedEvent<TLDMsg<>> ev {
+    .at = this->getClock()->currentCycle(),
+    .event = msg,
+  };
+  GlobalLogger::put_json(std::string("master_") + std::to_string(params->id) + ".d.proposed", ev);
   next_d.schedule();
 }
 
 void Master::grant_d() {
+  GlobalLogger::put(std::string("master_") + std::to_string(params->id) +
+                        ".d.accept",
+                    std::to_string(this->getClock()->currentCycle()));
   port->d.accept.send();
 }

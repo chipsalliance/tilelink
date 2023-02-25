@@ -1,5 +1,6 @@
 #include "Slave.hpp"
 #include "TLMsg.hpp"
+#include "GlobalLogger.hpp"
 #include <iostream>
 #include <limits>
 
@@ -21,7 +22,9 @@ Slave::Slave(sparta::TreeNode *node, const Parameters *params)
 }
 
 void Slave::accept_d() {
-  std::cout<<getClock()->currentCycle()<<" [Meow] Slave " << params->id.getValue() << " D accepted."<<std::endl;
+  GlobalLogger::put(std::string("slave_") + std::to_string(params->id) +
+                        ".d.accepted",
+                    std::to_string(this->getClock()->currentCycle()));
   sparta_assert(inflight.has_value(), "Received accept when there is no outstanding request");
   inflight->remaining--;
   if(inflight->remaining == 0) {
@@ -53,12 +56,22 @@ void Slave::send_d() {
     .corrupt = false,
   };
 
-  std::cout<<getClock()->currentCycle()<<" [Meow] Slave " << params->id.getValue() << " sending D: "<<msg<<std::endl;
+  TimedEvent<TLDMsg<>> ev {
+    .at = this->getClock()->currentCycle(),
+    .event = msg,
+  };
+  GlobalLogger::put_json(
+      std::string("slave_") + std::to_string(params->id) + ".d.propose", ev);
   port->d.data.send(msg);
 }
 
 void Slave::data_a(const TLABMsg<> &msg) {
-  std::cout<<getClock()->currentCycle()<<" [Meow] Slave " << params->id.getValue() << " received A: "<<msg<<std::endl;
+  TimedEvent<TLABMsg<>> ev {
+    .at = this->getClock()->currentCycle(),
+    .event = msg,
+  };
+  GlobalLogger::put_json(
+      std::string("slave_") + std::to_string(params->id) + ".a.proposed", ev);
   sparta_assert(!pending_a.has_value(), "Received A when there is already a pending A");
   pending_a = msg;
   if(!this->inflight.has_value()) this->sched_req();
@@ -75,6 +88,9 @@ void Slave::sched_req() {
   };
 
   pending_a.reset();
+  GlobalLogger::put(std::string("slave_") + std::to_string(params->id) +
+                        ".a.accept",
+                    std::to_string(this->getClock()->currentCycle()));
   port->a.accept.send();
   next_d.schedule();
 }

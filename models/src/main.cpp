@@ -7,6 +7,7 @@
 #include <limits>
 #include <string_view>
 
+#include "GlobalLogger.hpp"
 #include "Simulator.hpp" // Core model skeleton simulator
 
 #include "sparta/parsers/ConfigEmitterYAML.hpp"
@@ -18,12 +19,13 @@
 // sparta::app::CommandLineSimulator options
 const char USAGE[] =
     "Usage:\n"
-    "    [-d <file>]\n"
+    "    [-t <dir>]\n"
     "\n";
 
 int main(int argc, char **argv)
 {
-    std::string db;
+    std::ios::sync_with_stdio(false);
+    std::string logs;
 
     sparta::app::DefaultValues DEFAULTS;
     DEFAULTS.auto_summary_default = "on";
@@ -39,9 +41,9 @@ int main(int argc, char **argv)
         sparta::app::CommandLineSimulator cls(USAGE, DEFAULTS);
         auto & app_opts = cls.getApplicationOptions();
         app_opts.add_options()
-            ("db,d",
-             sparta::app::named_value<std::string>("DB", &db),
-             "Specifies the output db") // example, not used
+            ("trace,t",
+             sparta::app::named_value<std::string>("TRACE_DIR", &logs),
+             "Specifies the trace output path")
             ;
 
         // Parse command line options and configure simulator
@@ -49,6 +51,9 @@ int main(int argc, char **argv)
         if(!cls.parse(argc, argv, err_code)){
             return err_code; // Any errors already printed to cerr
         }
+
+        if(!logs.empty())
+            GlobalLogger::init(logs);
 
         // Create the simulator object for population -- does not
         // instantiate nor run it.
