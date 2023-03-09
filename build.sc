@@ -80,6 +80,7 @@ object tests extends Module {
     override def ivyDeps = T(Seq(
       v.mainargs
     ))
+    override def mainClass = Some("tests.elaborate.Main")
 
     // TODO: use Cross to support multiple config files for testing.
     def config: T[PathRef] = T { PathRef(os.pwd / "config.json") }
@@ -116,10 +117,9 @@ object tests extends Module {
         "-disable-infer-rw",
         "-dedup",
         "-O=debug",
-        "--split-verilog",
         "--preserve-values=named",
         "--output-annotation-file=mfc.anno.json",
-        s"-o=${T.dest}"
+        s"-o=${T.dest}/concat.sv"
       ).call(T.dest)
       PathRef(T.dest)
     }
@@ -135,11 +135,13 @@ object tests extends Module {
       ).filter(p => p.ext == "v" || p.ext == "sv").map(PathRef(_)).toSeq
     }
 
+
     def annotations = T {
       os.walk(compile().path).filter(p => p.last.endsWith("mfc.anno.json")).map(PathRef(_))
     }
   }
 
+  /*
   object emulator extends Module {
 
     def csrcDir = T.source {
@@ -238,4 +240,5 @@ object tests extends Module {
       PathRef(buildDir().path / "emulator")
     }
   }
+  */
 }
