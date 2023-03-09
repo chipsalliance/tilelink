@@ -57,6 +57,21 @@ static const std::optional<TLOpCode> tl_opcode_from_str(const std::string_view &
   return std::nullopt;
 }
 
+static const uint8_t tl_opcode_to_int(TLOpCode code) {
+  switch (code) {
+  case TLOpCode::Get:
+    return 4;
+  case TLOpCode::AccessAckData:
+    return 1;
+  case TLOpCode::PutFullData:
+    return 0;
+  case TLOpCode::PutPartialData:
+    return 1;
+  case TLOpCode::AccessAck:
+    return 0;
+  }
+}
+
 static void to_json(json& j, const TLOpCode& opcode) {
   j = tl_opcode_to_str(opcode);
 }

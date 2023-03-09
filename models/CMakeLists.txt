@@ -45,3 +45,4 @@ verilate(
   DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/verilated
   VERILATOR_ARGS --trace-params --trace-structs --top-module TLCrossBar
 )
+target_include_directories(rtlsim PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/verilated)
