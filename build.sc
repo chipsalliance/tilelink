@@ -10,6 +10,7 @@ import $file.common
 
 object v {
   val scala = "2.13.11"
+  val pprint = ivy"com.lihaoyi::pprint:0.8.1"
 }
 
 object chisel extends Chisel
@@ -26,4 +27,5 @@ object tilelink extends common.TileLinkModule with ScalafmtModule { m =>
   def scalaVersion = T(v.scala)
   def chiselModule = chisel
   def chiselPluginJar = T(chisel.pluginModule.jar())
+  def pprintIvy = v.pprint
 }
