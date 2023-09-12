@@ -5,7 +5,7 @@ package org.chipsalliance.tilelink
 package utils
 
 import chisel3._
-import chisel3.util.OHToUInt
+import chisel3.util.{Cat, OHToUInt}
 
 /**
   * Utilities for one-hot-1s encoding.
