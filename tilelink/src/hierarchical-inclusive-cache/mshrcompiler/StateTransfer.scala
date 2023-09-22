@@ -1,5 +1,9 @@
 package org.chipsalliance.hierachicalinclusivecache
 
+import chisel3.{Bool, UInt}
+import chisel3.util.BitPat
+import chisel3.util.experimental.decode.{TruthTable, decoder}
+
 
 object StateTransfer extends App {
   val stateMap: collection.mutable.Map[MSHRState, MSHRState] = collection.mutable.Map.empty[MSHRState, MSHRState]
@@ -88,6 +92,9 @@ object StateTransfer extends App {
         nextState.appendMap
       }
     }
+
+    def asBitPat: BitPat = sRProbe.asBitPat ## sRelease.asBitPat ## sPProbe.asBitPat ## sAcquire.asBitPat ##
+      sGrantAck.asBitPat ## sFlush.asBitPat ## sProbAck.asBitPat ## sExecute.asBitPat ## sWriteBack.asBitPat
   }
 
   val initStateList = InitStateTable.tableList.map { case (channel, initState) =>
@@ -108,5 +115,50 @@ object StateTransfer extends App {
   initStateList.foreach { state =>
     state.appendMap
   }
-  pprint.pprintln(initStateList)
+
+  // init table
+  val initTable: Iterable[(BitPat, BitPat)] = InitStateTable.tableList.map { case (inputMessage, initState) =>
+    val Seq(sRProbe, sRelease, sPProbe, sAcquire, sFlush, sProbAck, sExecute, wGrantAck, sWriteBack) = initState
+    // (_: Hit, _:Dirty, _:State, _:HitOtherClient, _: Channel , _: OpCode, _: Parameter)
+    val (h, d, s, c, n, o, p) = inputMessage
+    h.asBitPat ## d.asBitPat ## s.asBitPat ## c.asBitPat ## n.asBitPat ## o.asBitPat ## p.asBitPat ->
+      sRProbe.asBitPat ## sRelease.asBitPat ## sPProbe.asBitPat ## sAcquire.asBitPat ## sFlush.asBitPat ##
+        sProbAck.asBitPat ## sExecute.asBitPat ## wGrantAck.asBitPat ## sWriteBack.asBitPat
+  }
+
+  val transferTable: Iterable[(BitPat, BitPat)] = stateMap.map { case (previous, next) =>
+    previous.asBitPat -> next.asBitPat
+  }
+
+  def initDecode(
+                  hit: Bool,
+                  dirty: Bool,
+                  cacheState: UInt,
+                  hitState: UInt,
+                  channel: UInt,
+                  opcode: UInt,
+                  param: UInt
+                ): UInt = {
+    decoder(
+      hit ## dirty ## cacheState ## hitState ## channel ## opcode ## param,
+      TruthTable(initTable, BitPat.dontCare(9))
+    )
+  }
+
+  def transferDecode(
+                      sRProbe: Bool,
+                      sRelease: Bool,
+                      sPProbe: Bool,
+                      sAcquire: Bool,
+                      sFlush: Bool,
+                      sProbAck: Bool,
+                      sExecute: Bool,
+                      wGrantAck: Bool,
+                      sWriteBack: Bool,
+                ): UInt = {
+    decoder(
+      sRProbe ## sRelease ## sPProbe ## sAcquire ## sFlush ## sProbAck ## sExecute ## wGrantAck ## sWriteBack,
+      TruthTable(transferTable, BitPat.dontCare(9))
+    )
+  }
 }

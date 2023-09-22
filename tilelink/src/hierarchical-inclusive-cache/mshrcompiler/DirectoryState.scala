@@ -1,13 +1,51 @@
 package org.chipsalliance.hierachicalinclusivecache
 
+import chisel3.util.BitPat
 
-trait Hit
 
-trait Dirty
+trait Hit {
+  def asBitPat = {
+    this match {
+      case HitN => BitPat.N()
+      case HitY => BitPat.Y()
+      case _ => BitPat.dontCare(width = 1)
+    }
+  }
+}
 
-trait State
+trait Dirty {
+  def asBitPat = {
+    this match {
+      case DirtyN => BitPat.N()
+      case DirtyY => BitPat.Y()
+      case _ => BitPat.dontCare(width = 1)
+    }
+  }
+}
 
-trait ClientState
+trait State {
+  def asBitPat: BitPat = {
+    this match {
+      case Branch => BitPat("b01")
+      case Nothing => BitPat("b00")
+      case Tip => BitPat("b11")
+      case Trunk => BitPat("b10")
+      case _ => BitPat.dontCare(2)
+    }
+  }
+}
+
+trait ClientState {
+  def asBitPat: BitPat = {
+    this match {
+      case HitAll => BitPat("b11")
+      case HitOtherClient => BitPat("b10")
+      case HitSelf => BitPat("b01")
+      case NoClient => BitPat("b00")
+      case _ => BitPat.dontCare(2)
+    }
+  }
+}
 
 // HitAll = HitOtherClient && HitSelf
 case object HitAll extends ClientState

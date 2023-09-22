@@ -1,8 +1,18 @@
 package org.chipsalliance.hierachicalinclusivecache
 
 import CacheTable._
+import chisel3.util.BitPat
 
-trait RegisterState
+trait RegisterState {
+  def asBitPat: BitPat = {
+    this match {
+      case StateDC => BitPat.dontCare(width = 1)
+      case StateN => BitPat.N()
+      case StateY => BitPat.Y()
+      case _ => BitPat.dontCare(width = 1)
+    }
+  }
+}
 
 case object StateY extends RegisterState {
   override def toString: String = "Y"
