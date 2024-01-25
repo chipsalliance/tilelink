@@ -6,6 +6,7 @@ package utils
 
 import chisel3._
 import chisel3.util.OHToUInt
+import chisel3.util.Cat
 
 /**
   * Utilities for one-hot-1s encoding.
