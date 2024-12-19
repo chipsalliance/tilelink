@@ -1,3 +1,9 @@
 /out/
 /.idea/
 /.bsp/
+.*.sw[a-p]
+/.config/
+/.vscode/
+/.cache/
+/build/
+/config.json
